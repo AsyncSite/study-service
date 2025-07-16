@@ -26,6 +26,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+	
+	// OpenAPI/Swagger Documentation
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+	implementation("org.springdoc:springdoc-openapi-starter-common:2.8.0")
+	
+	// Lombok
+	compileOnly("org.projectlombok:lombok")
+	annotationProcessor("org.projectlombok:lombok")
+	
+	// Database
+	runtimeOnly("com.h2database:h2")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
