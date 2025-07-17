@@ -14,12 +14,24 @@ java {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
+
+	maven {
+		url = uri("https://maven.pkg.github.com/AsyncSite/core-platform")
+		credentials {
+			username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+			password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+		}
+	}
 }
 
 extra["springCloudVersion"] = "2024.0.1"
 
 dependencies {
+	// Core Platform Common
+	implementation("com.asyncsite.coreplatform:common:1.0.0-SNAPSHOT")
+
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
