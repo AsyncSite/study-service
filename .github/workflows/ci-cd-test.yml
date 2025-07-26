@@ -1,0 +1,170 @@
+name: CI/CD Test Pipeline (No Actual Deployment)
+
+on:
+  push:
+    branches: [ feature/deploy-test/**, test/** ]
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/asyncsite/study-service
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    - name: Configure Gradle properties
+      run: |
+        mkdir -p ~/.gradle
+        echo "gpr.user=${{ github.actor }}" >> ~/.gradle/gradle.properties
+        echo "gpr.key=${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
+        
+    - name: Build with Gradle (skip tests for now)
+      run: ./gradlew build -x test --no-daemon --stacktrace
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run tests
+      run: ./gradlew test --no-daemon --stacktrace
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/build/test-results/test/'
+        retention-days: 7
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: '**/build/reports/tests/'
+        retention-days: 7
+
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Configure Gradle properties
+      run: |
+        mkdir -p ~/.gradle
+        echo "gpr.user=${{ github.actor }}" >> ~/.gradle/gradle.properties
+        echo "gpr.key=${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
+    
+    - name: Build application
+      run: ./gradlew build -x test --no-daemon
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          ${{ env.IMAGE_NAME }}:latest
+          ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  simulate-deployment:
+    name: Simulate Deployment (Test Only)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Simulate infrastructure deployment
+      run: |
+        echo "🚀 Simulating infrastructure deployment..."
+        echo "✅ MySQL container would be deployed"
+        echo "✅ Redis container would be deployed"
+        echo "✅ Network 'asyncsite-network' would be created"
+        echo "Infrastructure deployment simulation completed!"
+    
+    - name: Simulate service deployment
+      run: |
+        echo "🚀 Simulating study-service deployment..."
+        echo "📦 Docker image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "✅ Container 'asyncsite-study-service' would be deployed"
+        echo "✅ Service would be connected to infrastructure network"
+        echo "✅ Health checks would be configured"
+        echo "Study service deployment simulation completed!"
+    
+    - name: Deployment summary
+      run: |
+        echo "🎉 Deployment Test Summary:"
+        echo "================================"
+        echo "✅ Build: SUCCESS"
+        echo "✅ Tests: SUCCESS"  
+        echo "✅ Docker Image: SUCCESS"
+        echo "✅ Push to Registry: SUCCESS"
+        echo "✅ Infrastructure Simulation: SUCCESS"
+        echo "✅ Service Simulation: SUCCESS"
+        echo ""
+        echo "🐳 Docker Image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "🌐 Would be accessible at: http://server:8083"
+        echo "📊 Health Check: http://server:8083/actuator/health"
+        echo "📝 API Docs: http://server:8083/swagger-ui.html"
