@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: study-service
+  
+  # Default active profile
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  # Spring Cloud Compatibility
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+# Swagger/OpenAPI Configuration (Common across all profiles)
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+    doc-expansion: none
+    tags-sorter: alpha
+    operations-sorter: alpha
+    disable-swagger-default-url: false
+    try-it-out-enabled: true
+    display-query-params-without-oauth2: true
+  use-forward-headers: true
+  show-actuator: false
+  writer-with-default-pretty-printer: true
+  default-produces-media-type: application/json;charset=UTF-8
+  default-consumes-media-type: application/json;charset=UTF-8
+
+# Server Configuration (Common)
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+# Management endpoints (Common)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

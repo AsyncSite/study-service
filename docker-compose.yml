@@ -1,70 +1,183 @@
-version: '3.8'
+# =============================================================================
+# Study Service - Complete Stack
+# =============================================================================
+# This docker-compose file contains:
+# - Shared Infrastructure: Redis, MySQL, Eureka
+# - Study Service: Study Management and Proposal System
+# 
+# Infrastructure services use consistent container names across all services.
+# Docker automatically prevents duplicate containers with the same name.
+# =============================================================================
 
 services:
+  # =============================================================================
+  # Shared Infrastructure Services
+  # These services are shared across all microservices in the asyncsite ecosystem
+  # =============================================================================
+  
+  # Redis - Caching and Session Management
+  redis:
+    image: redis:7-alpine
+    container_name: asyncsite-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - asyncsite-redis-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    labels:
+      - "com.asyncsite.service=redis"
+      - "com.asyncsite.tier=data"
+      - "com.asyncsite.type=infrastructure"
+
+  # MySQL - Main Database
+  mysql:
+    image: mysql:8.0
+    container_name: asyncsite-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: asyncsite_root_2024!
+    volumes:
+      - asyncsite-mysql-data:/var/lib/mysql
+      - ./mysql/conf:/etc/mysql/conf.d
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    labels:
+      - "com.asyncsite.service=mysql"
+      - "com.asyncsite.tier=data"
+      - "com.asyncsite.type=infrastructure"
+
+  # Eureka Server - Service Discovery
+  eureka:
+    image: asyncsite/eureka:latest
+    container_name: asyncsite-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    labels:
+      - "com.asyncsite.service=eureka"
+      - "com.asyncsite.tier=platform"
+      - "com.asyncsite.type=infrastructure"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # =============================================================================
+  # Study Service - Study Management and Proposal System
+  # =============================================================================
+  # Handles study proposal, approval, management, and termination
   study-service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: study-service
+    image: asyncsite/study-service:latest
+    container_name: asyncsite-study-service
+    restart: unless-stopped
     ports:
       - "8083:8083"
     environment:
-      # Spring 프로파일
+      # Spring Configuration
       - SPRING_PROFILES_ACTIVE=docker,microservices
-      # Eureka 설정
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      
+      # Service Discovery (uses shared Eureka)
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://asyncsite-eureka:8761/eureka/
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
-      # 데이터베이스 설정
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/studydb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - EUREKA_INSTANCE_INSTANCE_ID=${HOSTNAME}:study-service:8083
+      - EUREKA_INSTANCE_METADATA_MAP_VERSION=1.0.0
+      - EUREKA_INSTANCE_METADATA_MAP_ZONE=docker
+      
+      # Database Configuration (uses shared MySQL)
+      - SPRING_DATASOURCE_URL=jdbc:mysql://asyncsite-mysql:3306/studydb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf8&useUnicode=true
       - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_DATASOURCE_PASSWORD=asyncsite_root_2024!
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      
+      # JPA/Hibernate Configuration
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=false
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=false
+      
+      # Logging Configuration
+      - LOGGING_LEVEL_COM_ASYNCSITE_STUDYSERVICE=INFO
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=INFO
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
+      
+      # Management and Health
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+      - MANAGEMENT_HEALTH_DB_ENABLED=true
+    
     depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - asyncsite-network
-    volumes:
-      - ./logs:/app/logs
+      - mysql
+      - redis  
+      - eureka
+    
+    # Health check configuration
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    
+    # Resource limits
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 768M
+          cpus: '1.0'
         reservations:
-          memory: 512M
+          memory: 384M
+          cpus: '0.5'
+    
+    # Labels for service identification
     labels:
-      - "com.asyncsite.service=study"
+      - "com.asyncsite.service=study-service"
       - "com.asyncsite.tier=business"
+      - "com.asyncsite.type=microservice"
+      - "com.asyncsite.domain=study"
 
-  # 로컬 개발용 인프라
-  mysql:
-    image: mysql:8.0
-    container_name: study-mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=studydb
-    volumes:
-      - study-mysql-data:/var/lib/mysql
-      - ./mysql/conf:/etc/mysql/conf.d
-      - ./mysql/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3308:3306"
-    networks:
-      - asyncsite-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
+# =============================================================================
+# Network and Volume Configuration
+# =============================================================================
 networks:
-  asyncsite-network:
+  default:
     external: true
+    name: asyncsite-network
 
 volumes:
-  study-mysql-data:
+  asyncsite-redis-data:
+    external: true
+  asyncsite-mysql-data:
+    external: true

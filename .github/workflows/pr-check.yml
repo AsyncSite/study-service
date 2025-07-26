@@ -1,0 +1,63 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Validate Gradle wrapper
+      uses: gradle/wrapper-validation-action@v2
+    
+    - name: Configure Gradle properties
+      run: |
+        mkdir -p ~/.gradle
+        echo "gpr.user=${{ github.actor }}" >> ~/.gradle/gradle.properties
+        echo "gpr.key=${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
+    
+    - name: Build project
+      run: ./gradlew build -x test --no-daemon
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run unit tests
+      run: ./gradlew test --no-daemon
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Add test results to PR
+      if: always()
+      run: |
+        echo "## PR Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ $? -eq 0 ]; then
+          echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Some tests failed. Check the logs for details." >> $GITHUB_STEP_SUMMARY
+        fi

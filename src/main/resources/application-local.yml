@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: study-service
+  
+  # Spring Cloud Compatibility
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  
+  # Database Configuration (In-Memory H2 for local development)
+  datasource:
+    url: jdbc:h2:mem:localdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# Eureka Configuration - Disable for local testing
+eureka:
+  client:
+    enabled: false
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    display-query-params-without-oauth2: true
+
+# Server Configuration
+server:
+  port: 8080
+
+# Management endpoints for local monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops
+  endpoint:
+    health:
+      show-details: always
+
+# Logging Configuration for local development
+logging:
+  level:
+    com.asyncsite.studyservice: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

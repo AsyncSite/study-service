@@ -64,3 +64,6 @@ dependencyManagement {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+// Apply Docker tasks
+apply(from = "docker-tasks.gradle.kts")
