@@ -14,18 +14,41 @@ java {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
+
+	maven {
+		url = uri("https://maven.pkg.github.com/AsyncSite/core-platform")
+		credentials {
+			username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+			password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+		}
+	}
 }
 
 extra["springCloudVersion"] = "2024.0.1"
 
 dependencies {
+	// Core Platform Common
+	implementation("com.asyncsite.coreplatform:common:1.0.0-SNAPSHOT")
+
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+	
+	// OpenAPI/Swagger Documentation
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+	implementation("org.springdoc:springdoc-openapi-starter-common:2.8.0")
+	
+	// Lombok
+	compileOnly("org.projectlombok:lombok")
+	annotationProcessor("org.projectlombok:lombok")
+	
+	// Database
+	runtimeOnly("com.h2database:h2")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
