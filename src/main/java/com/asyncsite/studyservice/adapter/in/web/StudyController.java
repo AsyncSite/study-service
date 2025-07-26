@@ -10,7 +10,6 @@ import com.asyncsite.studyservice.domain.port.in.ProposeStudyUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -33,8 +32,7 @@ public class StudyController implements StudyControllerDocs {
     public ResponseEntity<ApiResponse<StudyResponse>> propose(@Valid @RequestBody StudyCreateRequest request) {
         Study study = proposeStudyUseCase.propose(request.title(), request.description(), request.proposerId());
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+        return ApiResponse.created(response);
     }
 
     @Override
@@ -42,7 +40,7 @@ public class StudyController implements StudyControllerDocs {
     public ResponseEntity<ApiResponse<StudyResponse>> approve(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.approve(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ApiResponse.ok(response);
     }
 
     @Override
@@ -50,7 +48,7 @@ public class StudyController implements StudyControllerDocs {
     public ResponseEntity<ApiResponse<StudyResponse>> reject(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.reject(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ApiResponse.ok(response);
     }
 
     @Override
@@ -58,7 +56,7 @@ public class StudyController implements StudyControllerDocs {
     public ResponseEntity<ApiResponse<StudyResponse>> terminate(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.terminate(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ApiResponse.ok(response);
     }
 
     @Override
@@ -88,6 +86,6 @@ public class StudyController implements StudyControllerDocs {
         }
         
         StudyResponse response = studyWebMapper.toResponse(study.get());
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ApiResponse.ok(response);
     }
 }
