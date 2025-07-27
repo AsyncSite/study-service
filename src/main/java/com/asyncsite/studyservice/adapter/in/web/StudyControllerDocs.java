@@ -24,7 +24,7 @@ public interface StudyControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "스터디 제안 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
     })
-    ResponseEntity<ApiResponse<StudyResponse>> propose(
+    ApiResponse<StudyResponse> propose(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "스터디 제안 정보")
             @Valid @RequestBody StudyCreateRequest request);
 
@@ -34,7 +34,7 @@ public interface StudyControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "스터디를 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    ResponseEntity<ApiResponse<StudyResponse>> approve(
+    ApiResponse<StudyResponse> approve(
             @Parameter(description = "스터디 ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studyId);
 
@@ -44,7 +44,7 @@ public interface StudyControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "스터디를 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    ResponseEntity<ApiResponse<StudyResponse>> reject(
+    ApiResponse<StudyResponse> reject(
             @Parameter(description = "스터디 ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studyId);
 
@@ -53,7 +53,7 @@ public interface StudyControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스터디 종료 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "스터디를 찾을 수 없음")
     })
-    ResponseEntity<ApiResponse<StudyResponse>> terminate(
+    ApiResponse<StudyResponse> terminate(
             @Parameter(description = "스터디 ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studyId);
 
@@ -61,13 +61,13 @@ public interface StudyControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ResponseEntity<ApiResponse<List<StudyResponse>>> getAllStudies();
+    ApiResponse<List<StudyResponse>> getAllStudies();
 
     @Operation(summary = "스터디 목록 페이징 조회", description = "승인된 스터디 목록을 페이징하여 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ResponseEntity<ApiResponse<Page<StudyResponse>>> getAllStudies(
+    ApiResponse<Page<StudyResponse>> getAllStudies(
             @Parameter(description = "페이징 정보 (page, size, sort)") Pageable pageable);
 
     @Operation(summary = "스터디 상세 조회", description = "특정 스터디의 상세 정보를 조회합니다.")
@@ -75,7 +75,7 @@ public interface StudyControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "스터디를 찾을 수 없음")
     })
-    ResponseEntity<ApiResponse<StudyResponse>> getStudyById(
+    ApiResponse<StudyResponse> getStudyById(
             @Parameter(description = "스터디 ID", example = "123e4567-e89b-12d3-a456-426614174000")
             @PathVariable UUID studyId);
 }

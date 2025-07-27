@@ -10,7 +10,8 @@ import com.asyncsite.studyservice.domain.port.in.ProposeStudyUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -29,63 +30,64 @@ public class StudyController implements StudyControllerDocs {
 
     @Override
     @PostMapping
-    public ResponseEntity<ApiResponse<StudyResponse>> propose(@Valid @RequestBody StudyCreateRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<StudyResponse> propose(@Valid @RequestBody StudyCreateRequest request) {
         Study study = proposeStudyUseCase.propose(request.title(), request.description(), request.proposerId());
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ApiResponse.created(response);
+        return ApiResponse.success(response);
     }
 
     @Override
     @PatchMapping("/{studyId}/approve")
-    public ResponseEntity<ApiResponse<StudyResponse>> approve(@PathVariable UUID studyId) {
+    public ApiResponse<StudyResponse> approve(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.approve(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @Override
     @PatchMapping("/{studyId}/reject")
-    public ResponseEntity<ApiResponse<StudyResponse>> reject(@PathVariable UUID studyId) {
+    public ApiResponse<StudyResponse> reject(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.reject(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @Override
     @DeleteMapping("/{studyId}")
-    public ResponseEntity<ApiResponse<StudyResponse>> terminate(@PathVariable UUID studyId) {
+    public ApiResponse<StudyResponse> terminate(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.terminate(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 
     @Override
     @GetMapping
-    public ResponseEntity<ApiResponse<List<StudyResponse>>> getAllStudies() {
+    public ApiResponse<List<StudyResponse>> getAllStudies() {
         List<Study> studies = getStudyUseCase.getAllStudies();
         List<StudyResponse> responses = studies.stream()
                 .map(studyWebMapper::toResponse)
                 .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ApiResponse.success(responses);
     }
 
     @Override
     @GetMapping("/paged")
-    public ResponseEntity<ApiResponse<Page<StudyResponse>>> getAllStudies(Pageable pageable) {
+    public ApiResponse<Page<StudyResponse>> getAllStudies(Pageable pageable) {
         Page<Study> studies = getStudyUseCase.getAllStudies(pageable);
         Page<StudyResponse> responses = studies.map(studyWebMapper::toResponse);
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ApiResponse.success(responses);
     }
 
     @Override
     @GetMapping("/{studyId}")
-    public ResponseEntity<ApiResponse<StudyResponse>> getStudyById(@PathVariable UUID studyId) {
+    public ApiResponse<StudyResponse> getStudyById(@PathVariable UUID studyId) {
         Optional<Study> study = getStudyUseCase.getStudyById(studyId);
         if (study.isEmpty()) {
             throw new StudyNotFoundException("Study not found with id: " + studyId);
         }
         
         StudyResponse response = studyWebMapper.toResponse(study.get());
-        return ApiResponse.ok(response);
+        return ApiResponse.success(response);
     }
 }
