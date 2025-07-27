@@ -23,10 +23,19 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout study-service
       uses: actions/checkout@v4
       with:
+        path: study-service
         fetch-depth: 0
+    
+    - name: Checkout core-platform
+      uses: actions/checkout@v4
+      with:
+        repository: AsyncSite/core-platform
+        ref: feature/common/initial-setup
+        path: core-platform
+        token: ${{ secrets.PAT_TOKEN }}
     
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -35,7 +44,17 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
     
+    - name: Build and publish core-platform common module
+      working-directory: core-platform
+      run: |
+        chmod +x gradlew
+        ./gradlew :common:build --no-daemon
+        ./gradlew :common:publishToMavenLocal --no-daemon
+        echo "Common module published to:"
+        ls -la ~/.m2/repository/com/asyncsite/coreplatform/common/
+    
     - name: Grant execute permission for gradlew
+      working-directory: study-service
       run: chmod +x gradlew
     
     - name: Cache Gradle packages
@@ -49,18 +68,21 @@ jobs:
           ${{ runner.os }}-gradle-
     
     - name: Configure Gradle properties
+      working-directory: study-service
       run: |
         mkdir -p ~/.gradle
         echo "gpr.user=${{ github.actor }}" >> ~/.gradle/gradle.properties
         echo "gpr.key=${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
         
     - name: Build with Gradle (skip tests)
+      working-directory: study-service
       run: ./gradlew build -x test --no-daemon --stacktrace
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Run tests
+      working-directory: study-service
       run: ./gradlew test --no-daemon --stacktrace
       env:
         USERNAME: ${{ github.actor }}
@@ -82,125 +104,6 @@ jobs:
         path: '**/build/reports/tests/'
         retention-days: 7
 
-  deploy-infrastructure:
-    name: Deploy Infrastructure (MySQL & Redis)
-    needs: test
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' && 
-      (contains(github.ref, 'main') || contains(github.ref, 'feature/'))
-    
-    steps:
-    - name: Setup SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -p 2222 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-    
-    - name: Deploy infrastructure services
-      run: |
-        ssh -p 2222 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
-          echo "Checking and deploying infrastructure services..."
-          
-          # Navigate to deployment directory
-          cd ~/deployments/infrastructure || mkdir -p ~/deployments/infrastructure && cd ~/deployments/infrastructure
-          
-          # Check if MySQL is already running
-          MYSQL_RUNNING=$(docker ps --filter "name=asyncsite-mysql" --filter "status=running" -q)
-          if [ -n "$MYSQL_RUNNING" ]; then
-            echo "MySQL container is already running, skipping MySQL deployment"
-          else
-            echo "MySQL container not running, will deploy MySQL"
-            DEPLOY_MYSQL=true
-          fi
-          
-          # Check if Redis is already running
-          REDIS_RUNNING=$(docker ps --filter "name=asyncsite-redis" --filter "status=running" -q)
-          if [ -n "$REDIS_RUNNING" ]; then
-            echo "Redis container is already running, skipping Redis deployment"
-          else
-            echo "Redis container not running, will deploy Redis"
-            DEPLOY_REDIS=true
-          fi
-          
-          # Only proceed if we need to deploy something
-          if [ "$DEPLOY_MYSQL" = "true" ] || [ "$DEPLOY_REDIS" = "true" ]; then
-            # Create docker-compose file for infrastructure
-            cat > docker-compose.yml << COMPOSE_EOF
-          services:
-            mysql:
-              image: mysql:8.0
-              container_name: asyncsite-mysql
-              ports:
-                - "3306:3306"
-              environment:
-                - MYSQL_ROOT_PASSWORD=asyncsite_root_2024!
-                - MYSQL_CHARACTER_SET_SERVER=utf8mb4
-                - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
-              volumes:
-                - asyncsite-mysql-data:/var/lib/mysql
-                - ./mysql/init:/docker-entrypoint-initdb.d
-              networks:
-                - asyncsite-network
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-                interval: 10s
-                timeout: 5s
-                retries: 5
-                
-            redis:
-              image: redis:7-alpine
-              container_name: asyncsite-redis
-              ports:
-                - "6379:6379"
-              volumes:
-                - asyncsite-redis-data:/data
-              networks:
-                - asyncsite-network
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "redis-cli", "ping"]
-                interval: 10s
-                timeout: 5s
-                retries: 3
-          
-          networks:
-            asyncsite-network:
-              external: true
-          
-          volumes:
-            asyncsite-redis-data:
-              driver: local
-            asyncsite-mysql-data:
-              driver: local
-        COMPOSE_EOF
-            
-            # Copy MySQL init scripts
-            mkdir -p ./mysql/init
-            cat > ./mysql/init/01-create-databases.sql << 'SQLEOF'
-        -- Create databases for different microservices
-        CREATE DATABASE IF NOT EXISTS studydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        CREATE DATABASE IF NOT EXISTS userdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        CREATE DATABASE IF NOT EXISTS asyncsite CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        
-        -- Grant privileges
-        GRANT ALL PRIVILEGES ON studydb.* TO 'root'@'%';
-        GRANT ALL PRIVILEGES ON userdb.* TO 'root'@'%';
-        GRANT ALL PRIVILEGES ON asyncsite.* TO 'root'@'%';
-        FLUSH PRIVILEGES;
-        SQLEOF
-            
-            # Start infrastructure containers
-            docker compose up -d
-            
-            echo "Infrastructure deployment completed!"
-          else
-            echo "All infrastructure services are already running, skipping deployment"
-          fi
-        ENDSSH
-
   build-and-push:
     name: Build and Push Docker Image
     needs: test
@@ -210,10 +113,19 @@ jobs:
       (contains(github.ref, 'main') || contains(github.ref, 'feature/'))
     
     steps:
-    - name: Checkout code
+    - name: Checkout study-service
       uses: actions/checkout@v4
       with:
+        path: study-service
         fetch-depth: 0
+    
+    - name: Checkout core-platform
+      uses: actions/checkout@v4
+      with:
+        repository: AsyncSite/core-platform
+        ref: feature/common/initial-setup
+        path: core-platform
+        token: ${{ secrets.PAT_TOKEN }}
     
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -222,17 +134,25 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
     
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Build and publish core-platform common module
+      working-directory: core-platform
+      run: |
+        chmod +x gradlew
+        ./gradlew :common:build --no-daemon
+        ./gradlew :common:publishToMavenLocal --no-daemon
     
     - name: Configure Gradle properties
+      working-directory: study-service
       run: |
         mkdir -p ~/.gradle
         echo "gpr.user=${{ github.actor }}" >> ~/.gradle/gradle.properties
         echo "gpr.key=${{ secrets.GITHUB_TOKEN }}" >> ~/.gradle/gradle.properties
     
     - name: Build application
-      run: ./gradlew build -x test --no-daemon
+      working-directory: study-service
+      run: |
+        chmod +x gradlew
+        ./gradlew build -x test --no-daemon
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -247,16 +167,16 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: .
-        file: ./Dockerfile
+        context: ./study-service
+        file: ./study-service/Dockerfile
         push: true
         tags: |
           ${{ env.IMAGE_NAME }}:latest
           ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   deploy:
-    name: Deploy Study Service
-    needs: [build-and-push, deploy-infrastructure]
+    name: Deploy to Home Server
+    needs: build-and-push
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && 
@@ -270,7 +190,7 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -p 2222 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
     
-    - name: Deploy study-service
+    - name: Deploy to server
       run: |
         ssh -p 2222 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
           echo "Starting deployment of study-service..."
@@ -288,26 +208,10 @@ jobs:
                 - "8083:8083"
               environment:
                 - SPRING_PROFILES_ACTIVE=docker
-                - EUREKA_CLIENT_ENABLED=true
                 - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://asyncsite-eureka:8761/eureka/
-                - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
-                - EUREKA_INSTANCE_INSTANCE_ID=\${HOSTNAME}:study-service:8083
-                - EUREKA_INSTANCE_METADATA_MAP_VERSION=1.0.0
-                - EUREKA_INSTANCE_METADATA_MAP_ZONE=docker
                 - SPRING_DATASOURCE_URL=jdbc:mysql://asyncsite-mysql:3306/studydb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf8&useUnicode=true
                 - SPRING_DATASOURCE_USERNAME=root
                 - SPRING_DATASOURCE_PASSWORD=asyncsite_root_2024!
-                - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
-                - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-                - SPRING_JPA_SHOW_SQL=false
-                - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
-                - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=false
-                - LOGGING_LEVEL_COM_ASYNCSITE_STUDYSERVICE=INFO
-                - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=INFO
-                - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
-                - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics
-                - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
-                - MANAGEMENT_HEALTH_DB_ENABLED=true
               networks:
                 - asyncsite-network
               restart: unless-stopped
@@ -329,9 +233,8 @@ jobs:
           # Pull latest image
           docker pull ${{ env.IMAGE_NAME }}:${{ github.sha }}
           
-          # Stop and remove old container
-          docker stop asyncsite-study-service 2>/dev/null || true
-          docker rm asyncsite-study-service 2>/dev/null || true
+          # Stop and remove old containers
+          docker compose down --remove-orphans || true
           
           # Start new containers
           docker compose up -d
@@ -343,5 +246,5 @@ jobs:
           # Check service status
           docker ps | grep asyncsite-study-service
           
-          echo "Study service deployment completed!"
+          echo "Deployment completed!"
         ENDSSH
