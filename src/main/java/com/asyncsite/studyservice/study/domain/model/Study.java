@@ -61,16 +61,25 @@ public class Study {
     }
 
     public void approve() {
+        if (this.status == StudyStatus.APPROVED) {
+            throw new com.asyncsite.studyservice.study.domain.exception.StudyAlreadyApprovedException("스터디가 이미 승인되었습니다.");
+        }
         this.status = StudyStatus.APPROVED;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void reject() {
+        if (this.status == StudyStatus.REJECTED) {
+            throw new com.asyncsite.studyservice.study.domain.exception.StudyAlreadyRejectedException("스터디가 이미 거절되었습니다.");
+        }
         this.status = StudyStatus.REJECTED;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void terminate() {
+        if (this.status == StudyStatus.TERMINATED) {
+            throw new com.asyncsite.studyservice.study.domain.exception.StudyAlreadyTerminatedException("스터디가 이미 종료되었습니다.");
+        }
         this.status = StudyStatus.TERMINATED;
         this.updatedAt = LocalDateTime.now();
     }

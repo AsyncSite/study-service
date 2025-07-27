@@ -7,29 +7,27 @@ spring:
     compatibility-verifier:
       enabled: false
   
-  # Database Configuration (In-Memory H2 for local development)
+  # Database Configuration (MySQL for local development)
   datasource:
-    url: jdbc:h2:mem:localdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:mysql://localhost:3306/studydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: asyncsite_root_2024!
   
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         use_sql_comments: true
-  
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
+        jdbc:
+          time_zone: UTC
 
 # Eureka Configuration - Disable for local testing
 eureka:

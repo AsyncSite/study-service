@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
 public class StudyConfiguration {
@@ -18,6 +19,7 @@ public class StudyConfiguration {
     }
 
     @Bean
+    @Profile("!test")
     CommandLineRunner initMockData(@Autowired StudyRepository studyRepository) {
         return args -> {
             Study study1 = new Study("Spring Boot 완전 정복", "Spring Boot 프레임워크를 깊이 있게 학습하는 스터디", "user001");

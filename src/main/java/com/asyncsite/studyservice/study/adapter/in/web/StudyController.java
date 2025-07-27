@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/studies")
+@RequestMapping("/api/v1/studies")
 @RequiredArgsConstructor
 public class StudyController implements StudyControllerDocs {
     private final ProposeStudyUseCase proposeStudyUseCase;
