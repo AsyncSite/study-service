@@ -1,11 +1,10 @@
 package com.asyncsite.studyservice.config;
 
 import com.asyncsite.coreplatform.common.dto.ApiResponse;
-import com.asyncsite.coreplatform.common.dto.ErrorDetail;
-import com.asyncsite.studyservice.domain.service.StudyNotFoundException;
-import com.asyncsite.studyservice.domain.exception.StudyAlreadyApprovedException;
-import com.asyncsite.studyservice.domain.exception.StudyAlreadyRejectedException;
-import com.asyncsite.studyservice.domain.exception.StudyAlreadyTerminatedException;
+import com.asyncsite.studyservice.study.domain.service.StudyNotFoundException;
+import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyApprovedException;
+import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyRejectedException;
+import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyTerminatedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
