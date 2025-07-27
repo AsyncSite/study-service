@@ -168,6 +168,9 @@ services:
       - "com.asyncsite.type=microservice"
       - "com.asyncsite.domain=study"
 
+    volumes:
+      - study-service-logs:/app/logs
+
 # =============================================================================
 # Network and Volume Configuration
 # =============================================================================
@@ -181,3 +184,5 @@ volumes:
     external: true
   asyncsite-mysql-data:
     external: true
+  study-service-logs:
+    driver: local

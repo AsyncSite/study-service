@@ -75,6 +75,9 @@ services:
       - "com.asyncsite.type=microservice"
       - "com.asyncsite.domain=study"
 
+    volumes:
+      - ~/asyncsite-logs/study-service:/app/logs
+
 # =============================================================================
 # Network Configuration
 # =============================================================================
@@ -82,3 +85,7 @@ networks:
   default:
     external: true
     name: asyncsite-network
+
+volumes:
+  study-service-logs:
+    driver: local

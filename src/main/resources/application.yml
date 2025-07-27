@@ -50,3 +50,10 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+logging:
+  level:
+    com.asyncsite.studyservice: DEBUG
+    org.springframework.security: DEBUG
+  file:
+    path: /app/logs
