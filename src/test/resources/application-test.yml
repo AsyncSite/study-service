@@ -3,26 +3,19 @@ spring:
     name: study-service-test
 
   datasource:
-    url: jdbc:mysql://localhost:3306/studydb_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: asyncsite_root_2024!
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
 
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: create
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-
-    show-sql: true
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: true
-        jdbc:
-          time_zone: UTC
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
 
   h2:
     console:
