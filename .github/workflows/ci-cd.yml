@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && 
-      (contains(github.ref, 'main') || contains(github.ref, 'feature/'))
+      github.ref == 'refs/heads/main'
     
     steps:
     - name: Checkout study-service
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && 
-      (contains(github.ref, 'main') || contains(github.ref, 'feature/'))
+      github.ref == 'refs/heads/main'
     
     steps:
     - name: Setup SSH key
