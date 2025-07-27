@@ -1,9 +1,9 @@
 package com.asyncsite.studyservice.config;
 
-import com.asyncsite.studyservice.domain.model.Study;
-import com.asyncsite.studyservice.domain.port.out.NotificationPort;
-import com.asyncsite.studyservice.domain.port.out.StudyRepository;
-import com.asyncsite.studyservice.domain.service.StudyService;
+import com.asyncsite.studyservice.study.domain.model.Study;
+import com.asyncsite.studyservice.study.domain.port.out.NotificationPort;
+import com.asyncsite.studyservice.study.domain.port.out.StudyRepository;
+import com.asyncsite.studyservice.study.domain.service.StudyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
