@@ -1,0 +1,69 @@
+package com.asyncsite.studyservice.study.adapter.out.persistence;
+
+import com.asyncsite.studyservice.study.adapter.out.persistence.entity.StudyJpaEntity;
+import com.asyncsite.studyservice.study.adapter.out.persistence.mapper.StudyPersistenceMapper;
+import com.asyncsite.studyservice.study.adapter.out.persistence.repository.StudyJpaRepository;
+import com.asyncsite.studyservice.study.domain.model.Study;
+import com.asyncsite.studyservice.study.domain.port.out.StudyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public class StudyPersistenceAdapter implements StudyRepository {
+    
+    private final StudyJpaRepository jpaRepository;
+    private final StudyPersistenceMapper mapper;
+    
+    public StudyPersistenceAdapter(final StudyJpaRepository jpaRepository, 
+                                 final StudyPersistenceMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+    
+    @Override
+    public Study save(final Study study) {
+        final Optional<StudyJpaEntity> existingEntity = jpaRepository.findById(study.getId());
+        
+        final StudyJpaEntity entityToSave;
+        if (existingEntity.isPresent()) {
+            // 기존 엔티티 업데이트
+            entityToSave = mapper.updateEntity(existingEntity.get(), study);
+        } else {
+            // 새 엔티티 생성
+            entityToSave = mapper.toJpaEntity(study);
+        }
+        
+        final StudyJpaEntity savedEntity = jpaRepository.save(entityToSave);
+        return mapper.toDomainModel(savedEntity);
+    }
+    
+    @Override
+    public Optional<Study> findById(final UUID id) {
+        return jpaRepository.findById(id)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public List<Study> findAll() {
+        return jpaRepository.findAll()
+                .stream()
+                .map(mapper::toDomainModel)
+                .toList();
+    }
+    
+    @Override
+    public Page<Study> findAll(final Pageable pageable) {
+        return jpaRepository.findAll(pageable)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public void deleteById(final UUID id) {
+        jpaRepository.deleteById(id);
+    }
+}

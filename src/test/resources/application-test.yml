@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: study-service-test
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/studydb_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: asyncsite_root_2024!
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          time_zone: UTC
+
+  h2:
+    console:
+      enabled: false
+
+# Eureka Configuration - Disable for testing
+eureka:
+  client:
+    enabled: false
+
+# Logging Configuration for testing
+logging:
+  level:
+    com.asyncsite.studyservice: DEBUG
+    org.springframework.web: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.test: DEBUG

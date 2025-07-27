@@ -32,7 +32,7 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://asyncsite-eureka:8761/eureka/}
   instance:
     prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:true}
-    instance-id: ${EUREKA_INSTANCE_INSTANCE_ID:${HOSTNAME}:study-service:8083}
+    instance-id: study-service:${EUREKA_INSTANCE_INSTANCE_ID:${HOSTNAME}:8083}
     metadata-map:
       version: ${EUREKA_INSTANCE_METADATA_MAP_VERSION:1.0.0}
       zone: ${EUREKA_INSTANCE_METADATA_MAP_ZONE:docker}
