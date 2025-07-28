@@ -3,8 +3,10 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # 보안을 위한 non-root 사용자 생성
-RUN groupadd -g 1001 appgroup && \
-    useradd -r -u 1001 -g appgroup appuser
+RUN useradd -m -u 1001 appuser && \
+    mkdir -p /app/logs && \
+    chown -R appuser:appuser /app && \
+    chmod 755 /app/logs
 
 # 사전 빌드된 JAR 파일 복사
 COPY --chown=appuser:appgroup build/libs/*.jar app.jar
