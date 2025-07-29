@@ -1,21 +1,34 @@
 package com.asyncsite.studyservice.membership.adapter.out.persistence;
 
+import com.asyncsite.studyservice.membership.adapter.out.persistence.mapper.ApplicationPersistenceMapper;
+import com.asyncsite.studyservice.membership.adapter.out.persistence.repository.ApplicationJpaRepository;
 import com.asyncsite.studyservice.membership.domain.model.Application;
+import com.asyncsite.studyservice.membership.domain.model.ApplicationStatus;
 import com.asyncsite.studyservice.membership.domain.port.out.ApplicationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Repository
-public class MockApplicationRepository implements ApplicationRepository {
-    
+public class ApplicationPersistenceAdapter implements ApplicationRepository {
+
+    private final ApplicationJpaRepository jpaRepository;
+    private final ApplicationPersistenceMapper mapper;
     private final Map<UUID, Application> storage = new ConcurrentHashMap<>();
-    
+
+    public ApplicationPersistenceAdapter(ApplicationJpaRepository jpaRepository, ApplicationPersistenceMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+
     @Override
     public Application save(Application application) {
         storage.put(application.getId(), application);
@@ -53,11 +66,8 @@ public class MockApplicationRepository implements ApplicationRepository {
     }
     
     @Override
-    public boolean existsByStudyIdAndApplicantId(UUID studyId, String applicantId) {
-        return storage.values().stream()
-                .anyMatch(app -> app.getStudyId().equals(studyId) 
-                        && app.getApplicantId().equals(applicantId)
-                        && app.isPending());
+    public boolean existsByStudyIdAndApplicantIdAndStatus(UUID studyId, String applicantId) {
+        return jpaRepository.existsByStudyIdAndApplicantIdAndStatus(studyId, applicantId, ApplicationStatus.PENDING);
     }
     
     @Override

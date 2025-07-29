@@ -7,7 +7,6 @@ import com.asyncsite.studyservice.membership.domain.port.in.AcceptApplicationUse
 import com.asyncsite.studyservice.membership.domain.port.out.ApplicationRepository;
 import com.asyncsite.studyservice.membership.domain.port.out.MemberRepository;
 import com.asyncsite.studyservice.membership.domain.port.out.MembershipNotificationPort;
-import com.asyncsite.studyservice.membership.domain.port.out.StudyValidationPort;
 import com.asyncsite.studyservice.membership.domain.service.MembershipDomainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,6 @@ import java.util.UUID;
 public class AcceptApplicationService implements AcceptApplicationUseCase {
     private final ApplicationRepository applicationRepository;
     private final MemberRepository memberRepository;
-    private final StudyValidationPort studyValidationPort;
     private final MembershipNotificationPort notificationPort;
     private final MembershipDomainService membershipDomainService;
     
