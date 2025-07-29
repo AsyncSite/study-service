@@ -4,6 +4,7 @@ import com.asyncsite.studyservice.study.adapter.out.persistence.entity.StudyJpaE
 import com.asyncsite.studyservice.study.adapter.out.persistence.mapper.StudyPersistenceMapper;
 import com.asyncsite.studyservice.study.adapter.out.persistence.repository.StudyJpaRepository;
 import com.asyncsite.studyservice.study.domain.model.Study;
+import com.asyncsite.studyservice.study.domain.model.StudyStatus;
 import com.asyncsite.studyservice.study.domain.port.out.StudyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,5 +66,33 @@ public class StudyPersistenceAdapter implements StudyRepository {
     @Override
     public void deleteById(final UUID id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean isStudyExists(UUID studyId) {
+        return jpaRepository.findById(studyId).isPresent();
+    }
+
+    @Override
+    public boolean isStudyRecruiting(UUID studyId) {
+        return jpaRepository.findById(studyId)
+                .map(study -> study.getStatus() == StudyStatus.APPROVED)
+                .orElse(false);
+    }
+
+    @Override
+    public StudyStatus getStudyStatus(UUID studyId) {
+        return jpaRepository.findById(studyId)
+                .map(mapper::toDomainModel)
+                .map(Study::getStatus)
+                .orElse(null);
+    }
+
+    @Override
+    public boolean isUserStudyLeader(UUID studyId, String userId) {
+        // Mock implementation - 실제로는 스터디의 리더 정보를 확인해야 함
+        return jpaRepository.findById(studyId)
+                .map(study -> study.getProposerId().equals(userId))
+                .orElse(false);
     }
 }

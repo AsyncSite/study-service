@@ -1,6 +1,7 @@
 package com.asyncsite.studyservice.study.domain.port.out;
 
 import com.asyncsite.studyservice.study.domain.model.Study;
+import com.asyncsite.studyservice.study.domain.model.StudyStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,4 +15,8 @@ public interface StudyRepository {
     List<Study> findAll();
     Page<Study> findAll(Pageable pageable);
     void deleteById(UUID id);
+    boolean isStudyExists(UUID studyId);
+    boolean isStudyRecruiting(UUID studyId);
+    StudyStatus getStudyStatus(UUID studyId);
+    boolean isUserStudyLeader(UUID studyId, String userId);
 }
