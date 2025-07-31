@@ -110,7 +110,7 @@ class StudyControllerAuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+                .andExpect(jsonPath("$.error.code").value("AUTH-4001"));
     }
 
     @Test
@@ -141,11 +141,15 @@ class StudyControllerAuthIntegrationTest {
     @DisplayName("다른 사용자의 proposerId로 스터디 제안 시 403 반환")
     void shouldReturn403WhenProposingStudyForAnotherUser() throws Exception {
         // given
+        String userId = "user123";
         StudyCreateRequest request = new StudyCreateRequest("Test Study", "Description", "otherUser");
+        UserContext userContext = new UserContext(userId, "user@example.com", "Test User", Set.of(Role.USER));
+        
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(userContext));
         
         // when & then
         mockMvc.perform(post("/api/v1/studies")
-                        .header(USER_ID_HEADER, "user123")
+                        .header(USER_ID_HEADER, userId)
                         .header(USER_EMAIL_HEADER, "user@example.com")
                         .header(USER_NAME_HEADER, "Test User")
                         .header(USER_ROLES_HEADER, "USER")
@@ -153,21 +157,24 @@ class StudyControllerAuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+                .andExpect(jsonPath("$.error.code").value("AUTH-4003"));
     }
 
     @Test
     @DisplayName("ADMIN 권한으로 스터디 승인이 가능하다")
     void shouldAllowStudyApprovalWithAdminRole() throws Exception {
         // given
+        String adminId = "admin123";
         UUID studyId = UUID.randomUUID();
         Study mockStudy = createMockStudy();
+        UserContext adminContext = new UserContext(adminId, "admin@example.com", "Admin User", Set.of(Role.ADMIN));
         
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(adminContext));
         when(manageStudyUseCase.approve(studyId)).thenReturn(mockStudy);
         
         // when & then
         mockMvc.perform(patch("/api/v1/studies/" + studyId + "/approve")
-                        .header(USER_ID_HEADER, "admin123")
+                        .header(USER_ID_HEADER, adminId)
                         .header(USER_EMAIL_HEADER, "admin@example.com")
                         .header(USER_NAME_HEADER, "Admin User")
                         .header(USER_ROLES_HEADER, "ADMIN"))
@@ -179,17 +186,21 @@ class StudyControllerAuthIntegrationTest {
     @DisplayName("USER 권한으로 스터디 승인 시 403 반환")
     void shouldReturn403WhenUserTriesToApproveStudy() throws Exception {
         // given
+        String userId = "user123";
         UUID studyId = UUID.randomUUID();
+        UserContext userContext = new UserContext(userId, "user@example.com", "Test User", Set.of(Role.USER));
+        
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(userContext));
         
         // when & then
         mockMvc.perform(patch("/api/v1/studies/" + studyId + "/approve")
-                        .header(USER_ID_HEADER, "user123")
+                        .header(USER_ID_HEADER, userId)
                         .header(USER_EMAIL_HEADER, "user@example.com")
                         .header(USER_NAME_HEADER, "Test User")
                         .header(USER_ROLES_HEADER, "USER"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+                .andExpect(jsonPath("$.error.code").value("AUTH-4003"));
     }
 
     @Test
@@ -199,7 +210,9 @@ class StudyControllerAuthIntegrationTest {
         String userId = "user123";
         StudyCreateRequest request = new StudyCreateRequest("Test Study", "Description", userId);
         Study mockStudy = createMockStudy();
+        UserContext adminContext = new UserContext(userId, "admin@example.com", "Admin User", Set.of(Role.ADMIN));
         
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(adminContext));
         when(proposeStudyUseCase.propose(any(), any(), any())).thenReturn(mockStudy);
         
         // when & then - ADMIN 권한으로도 스터디 제안 가능 (USER, ADMIN 중 하나)
