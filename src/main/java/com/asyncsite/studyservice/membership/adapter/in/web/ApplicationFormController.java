@@ -4,8 +4,7 @@ import com.asyncsite.coreplatform.common.dto.ApiResponse;
 import com.asyncsite.studyservice.membership.adapter.in.web.dto.ApplicationFormRequest;
 import com.asyncsite.studyservice.membership.adapter.in.web.dto.ApplicationFormResponse;
 import com.asyncsite.studyservice.membership.domain.model.ApplicationForm;
-import com.asyncsite.studyservice.membership.domain.port.in.ManageApplicationFormUseCase;
-import io.swagger.v3.oas.annotations.Operation;
+import com.asyncsite.studyservice.membership.domain.port.in.ApplicationFormUseCase;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,18 +18,18 @@ import java.util.*;
 @Tag(name = "Application Form Management", description = "지원서 양식 관리 API")
 @RequiredArgsConstructor
 @Slf4j
-public class ApplicationFormWebAdapter {
+public class ApplicationFormController implements ApplicationFormControllerDocs {
     
-    private final ManageApplicationFormUseCase manageApplicationFormUseCase;
+    private final ApplicationFormUseCase applicationFormUseCase;
     
+    @Override
     @GetMapping
-    @Operation(summary = "지원서 양식 조회", description = "스터디의 활성 지원서 양식을 조회합니다")
     public ApiResponse<ApplicationFormResponse> getApplicationForm(
             @PathVariable UUID studyId) {
         
         log.info("지원서 양식 조회 - studyId: {}", studyId);
         
-        Optional<ApplicationForm> form = manageApplicationFormUseCase.getFormByStudyId(studyId);
+        Optional<ApplicationForm> form = applicationFormUseCase.getFormByStudyId(studyId);
         if (form.isEmpty()) {
             return ApiResponse.<ApplicationFormResponse>error("FORM_NOT_FOUND", "활성화된 지원서 양식이 없습니다.", null);
         }
@@ -38,20 +37,20 @@ public class ApplicationFormWebAdapter {
         return ApiResponse.success(ApplicationFormResponse.from(form.get()));
     }
     
+    @Override
     @PostMapping
-    @Operation(summary = "지원서 양식 생성", description = "새로운 지원서 양식을 생성합니다")
     public ApiResponse<ApplicationFormResponse> createApplicationForm(
             @PathVariable UUID studyId,
             @Valid @RequestBody ApplicationFormRequest request) {
         
         log.info("지원서 양식 생성 - studyId: {}, questions: {}", studyId, request.getQuestions().size());
         
-        ApplicationForm form = manageApplicationFormUseCase.createForm(studyId, request.toQuestions());
+        ApplicationForm form = applicationFormUseCase.createForm(studyId, request.toQuestions());
         return ApiResponse.createdResponse(ApplicationFormResponse.from(form));
     }
     
+    @Override
     @PutMapping("/{formId}")
-    @Operation(summary = "지원서 양식 수정", description = "지원서 양식을 수정합니다")
     public ApiResponse<ApplicationFormResponse> updateApplicationForm(
             @PathVariable UUID studyId,
             @PathVariable UUID formId,
@@ -59,24 +58,24 @@ public class ApplicationFormWebAdapter {
         
         log.info("지원서 양식 수정 - formId: {}", formId);
         
-        ApplicationForm form = manageApplicationFormUseCase.updateForm(formId, request.toQuestions());
+        ApplicationForm form = applicationFormUseCase.updateForm(formId, request.toQuestions());
         return ApiResponse.success(ApplicationFormResponse.from(form));
     }
     
+    @Override
     @DeleteMapping("/{formId}")
-    @Operation(summary = "지원서 양식 비활성화", description = "지원서 양식을 비활성화합니다")
     public ApiResponse<Void> deactivateApplicationForm(
             @PathVariable UUID studyId,
             @PathVariable UUID formId) {
         
         log.info("지원서 양식 비활성화 - formId: {}", formId);
         
-        manageApplicationFormUseCase.deactivateForm(formId);
+        applicationFormUseCase.deactivateForm(formId);
         return ApiResponse.success(null);
     }
     
+    @Override
     @GetMapping("/template")
-    @Operation(summary = "기본 템플릿 조회", description = "지원서 양식 기본 템플릿을 조회합니다")
     public ApiResponse<Map<String, Object>> getApplicationFormTemplate() {
         
         log.info("지원서 양식 템플릿 조회");

@@ -1,8 +1,12 @@
 package com.asyncsite.studyservice.membership.application.service;
 
 import com.asyncsite.studyservice.membership.domain.model.Application;
+import com.asyncsite.studyservice.membership.domain.model.ApplicationForm;
+import com.asyncsite.studyservice.membership.domain.model.ApplicationQuestion;
 import com.asyncsite.studyservice.membership.domain.model.Member;
+import com.asyncsite.studyservice.membership.domain.port.in.ApplicationFormUseCase;
 import com.asyncsite.studyservice.membership.domain.port.in.ApplicationUseCase;
+import com.asyncsite.studyservice.membership.domain.service.ApplicationFormService;
 import com.asyncsite.studyservice.membership.domain.service.ApplicationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,12 +34,16 @@ class ApplicationUseCaseImplTest {
 
     @Mock
     private ApplicationService applicationService;
+    @Mock
+    private ApplicationFormService applicationFormService;
 
     private ApplicationUseCase applicationUseCase;
+    private ApplicationFormUseCase applicationFormUseCase;
 
     @BeforeEach
     void setUp() {
-        applicationUseCase = new ApplicationUseCaseImpl(applicationService);
+        applicationUseCase = new ApplicationUseCaseImpl(applicationService, applicationFormService);
+        applicationFormUseCase = (ApplicationFormUseCase) applicationUseCase;
     }
 
     @Test
@@ -139,5 +148,72 @@ class ApplicationUseCaseImplTest {
 
         // then
         verify(applicationService).cancelApplication(applicationId, applicantId);
+    }
+
+    @Test
+    @DisplayName("스터디 ID로 지원서 양식을 조회할 수 있다")
+    void givenStudyId_whenGetFormByStudyId_thenReturnsApplicationForm() {
+        // given
+        final UUID studyId = UUID.randomUUID();
+        ApplicationForm expectedForm = ApplicationForm.builder().build();
+
+        given(applicationFormService.getFormByStudyId(studyId)).willReturn(Optional.of(expectedForm));
+
+        // when
+        Optional<ApplicationForm> result = applicationFormUseCase.getFormByStudyId(studyId);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(expectedForm);
+        verify(applicationFormService).getFormByStudyId(studyId);
+    }
+
+    @Test
+    @DisplayName("지원서 양식을 생성할 수 있다")
+    void givenStudyIdAndQuestions_whenCreateForm_thenReturnsCreatedApplicationForm() {
+        // given
+        final UUID studyId = UUID.randomUUID();
+        final List<ApplicationQuestion> questions = List.of(ApplicationQuestion.builder().build());
+        ApplicationForm expectedForm = ApplicationForm.builder().build();
+
+        given(applicationFormService.createForm(studyId, questions)).willReturn(expectedForm);
+
+        // when
+        ApplicationForm result = applicationFormUseCase.createForm(studyId, questions);
+
+        // then
+        assertThat(result).isEqualTo(expectedForm);
+        verify(applicationFormService).createForm(studyId, questions);
+    }
+
+    @Test
+    @DisplayName("지원서 양식을 수정할 수 있다")
+    void givenFormIdAndQuestions_whenUpdateForm_thenReturnsUpdatedApplicationForm() {
+        // given
+        final UUID formId = UUID.randomUUID();
+        final List<ApplicationQuestion> questions = List.of(ApplicationQuestion.builder().build());
+        ApplicationForm expectedForm = ApplicationForm.builder().build();
+
+        given(applicationFormService.updateForm(formId, questions)).willReturn(expectedForm);
+
+        // when
+        ApplicationForm result = applicationFormUseCase.updateForm(formId, questions);
+
+        // then
+        assertThat(result).isEqualTo(expectedForm);
+        verify(applicationFormService).updateForm(formId, questions);
+    }
+
+    @Test
+    @DisplayName("지원서 양식을 비활성화할 수 있다")
+    void givenFormId_whenDeactivateForm_thenCallsApplicationFormServiceDeactivateForm() {
+        // given
+        final UUID formId = UUID.randomUUID();
+
+        // when
+        applicationFormUseCase.deactivateForm(formId);
+
+        // then
+        verify(applicationFormService).deactivateForm(formId);
     }
 }
