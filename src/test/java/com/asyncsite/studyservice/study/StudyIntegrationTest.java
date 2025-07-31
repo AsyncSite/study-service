@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,9 +30,13 @@ class StudyIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+    
+    private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String USER_EMAIL_HEADER = "X-User-Email";
+    private static final String USER_NAME_HEADER = "X-User-Name";
+    private static final String USER_ROLES_HEADER = "X-User-Roles";
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("스터디 생성 API 통합 테스트")
     void givenValidStudyRequest_whenCreateStudy_thenReturnsCreatedStudy() throws Exception {
@@ -46,6 +49,10 @@ class StudyIntegrationTest {
 
         // when & then
         mockMvc.perform(post("/api/v1/studies")
+                        .header(USER_ID_HEADER, "user001")
+                        .header(USER_EMAIL_HEADER, "user001@example.com")
+                        .header(USER_NAME_HEADER, "Test User")
+                        .header(USER_ROLES_HEADER, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -59,7 +66,6 @@ class StudyIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("스터디 목록 조회 API 통합 테스트")
     void whenGetAllStudies_thenReturnsStudyList() throws Exception {
@@ -68,10 +74,18 @@ class StudyIntegrationTest {
         final StudyCreateRequest request2 = new StudyCreateRequest("Study 2", "Description 2", "user002");
 
         mockMvc.perform(post("/api/v1/studies")
+                .header(USER_ID_HEADER, "user001")
+                .header(USER_EMAIL_HEADER, "user001@example.com")
+                .header(USER_NAME_HEADER, "Test User 1")
+                .header(USER_ROLES_HEADER, "USER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)));
 
         mockMvc.perform(post("/api/v1/studies")
+                .header(USER_ID_HEADER, "user002")
+                .header(USER_EMAIL_HEADER, "user002@example.com")
+                .header(USER_NAME_HEADER, "Test User 2")
+                .header(USER_ROLES_HEADER, "USER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request2)));
 
@@ -87,7 +101,6 @@ class StudyIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("스터디 승인 API 통합 테스트")
     void givenPendingStudy_whenApproveStudy_thenReturnsApprovedStudy() throws Exception {
@@ -99,6 +112,10 @@ class StudyIntegrationTest {
         );
 
         final String createResponse = mockMvc.perform(post("/api/v1/studies")
+                        .header(USER_ID_HEADER, "user001")
+                        .header(USER_EMAIL_HEADER, "user001@example.com")
+                        .header(USER_NAME_HEADER, "Test User")
+                        .header(USER_ROLES_HEADER, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -107,7 +124,11 @@ class StudyIntegrationTest {
         final StudyResponse createdStudy = ApiResponseWrapper.extractData(createResponse, StudyResponse.class, objectMapper);
 
         // when & then
-        mockMvc.perform(patch("/api/v1/studies/{studyId}/approve", createdStudy.id()))
+        mockMvc.perform(patch("/api/v1/studies/{studyId}/approve", createdStudy.id())
+                        .header(USER_ID_HEADER, "admin001")
+                        .header(USER_EMAIL_HEADER, "admin001@example.com")
+                        .header(USER_NAME_HEADER, "Admin User")
+                        .header(USER_ROLES_HEADER, "ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(createdStudy.id().toString()))
                 .andExpect(jsonPath("$.data.status").value("APPROVED"))
@@ -115,7 +136,6 @@ class StudyIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("스터디 거절 API 통합 테스트")
     void givenPendingStudy_whenRejectStudy_thenReturnsRejectedStudy() throws Exception {
@@ -127,6 +147,10 @@ class StudyIntegrationTest {
         );
 
         final String createResponse = mockMvc.perform(post("/api/v1/studies")
+                        .header(USER_ID_HEADER, "user001")
+                        .header(USER_EMAIL_HEADER, "user001@example.com")
+                        .header(USER_NAME_HEADER, "Test User")
+                        .header(USER_ROLES_HEADER, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -135,7 +159,11 @@ class StudyIntegrationTest {
         final StudyResponse createdStudy = ApiResponseWrapper.extractData(createResponse, StudyResponse.class, objectMapper);
 
         // when & then
-        mockMvc.perform(patch("/api/v1/studies/{studyId}/reject", createdStudy.id()))
+        mockMvc.perform(patch("/api/v1/studies/{studyId}/reject", createdStudy.id())
+                        .header(USER_ID_HEADER, "admin001")
+                        .header(USER_EMAIL_HEADER, "admin001@example.com")
+                        .header(USER_NAME_HEADER, "Admin User")
+                        .header(USER_ROLES_HEADER, "ADMIN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(createdStudy.id().toString()))
                 .andExpect(jsonPath("$.data.status").value("REJECTED"))
@@ -143,7 +171,6 @@ class StudyIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("스터디 단건 조회 API 통합 테스트")
     void givenExistingStudy_whenGetStudyById_thenReturnsStudy() throws Exception {
@@ -155,6 +182,10 @@ class StudyIntegrationTest {
         );
 
         final String createResponse = mockMvc.perform(post("/api/v1/studies")
+                        .header(USER_ID_HEADER, "user001")
+                        .header(USER_EMAIL_HEADER, "user001@example.com")
+                        .header(USER_NAME_HEADER, "Test User")
+                        .header(USER_ROLES_HEADER, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -173,7 +204,6 @@ class StudyIntegrationTest {
     }
 
     @Test
-    @WithMockUser
     @Transactional
     @DisplayName("존재하지 않는 스터디 조회 시 404 반환")
     void givenNonExistentStudyId_whenGetStudyById_thenReturns404() throws Exception {

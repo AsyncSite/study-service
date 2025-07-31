@@ -31,6 +31,16 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // GET 요청에 대한 특별 처리 - 스터디 조회 관련 엔드포인트는 공개
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+        if ("GET".equals(method)) {
+            if (requestURI.equals("/api/v1/studies") || 
+                (requestURI.startsWith("/api/v1/studies/") && requestURI.matches("/api/v1/studies/[a-f0-9-]{36}"))) {
+                return true; // GET 요청은 인증 불요
+            }
+        }
+
         // @RequireAuth 어노테이션 확인 (메서드 레벨 우선, 클래스 레벨 fallback)
         RequireAuth methodAuth = handlerMethod.getMethodAnnotation(RequireAuth.class);
         RequireAuth classAuth = handlerMethod.getBeanType().getAnnotation(RequireAuth.class);

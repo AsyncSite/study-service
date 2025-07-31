@@ -79,6 +79,7 @@ class AuthenticationInterceptorTest {
         Method method = TestController.class.getMethod("requiresAuth");
         when(handlerMethod.getMethodAnnotation(RequireAuth.class))
                 .thenReturn(method.getAnnotation(RequireAuth.class));
+        when(handlerMethod.getBeanType()).thenReturn((Class) TestController.class);
         when(userContextExtractor.extractUserContext(request)).thenReturn(Optional.empty());
         
         // when & then
@@ -94,6 +95,7 @@ class AuthenticationInterceptorTest {
         Method method = TestController.class.getMethod("requiresAdmin");
         when(handlerMethod.getMethodAnnotation(RequireAuth.class))
                 .thenReturn(method.getAnnotation(RequireAuth.class));
+        when(handlerMethod.getBeanType()).thenReturn((Class) TestController.class);
         
         UserContext userContext = new UserContext("user123", "user@example.com", "Test User", Set.of(Role.USER));
         when(userContextExtractor.extractUserContext(request)).thenReturn(Optional.of(userContext));
@@ -111,6 +113,7 @@ class AuthenticationInterceptorTest {
         Method method = TestController.class.getMethod("requiresAdmin");
         when(handlerMethod.getMethodAnnotation(RequireAuth.class))
                 .thenReturn(method.getAnnotation(RequireAuth.class));
+        when(handlerMethod.getBeanType()).thenReturn((Class) TestController.class);
         
         UserContext userContext = new UserContext("admin123", "admin@example.com", "Admin User", Set.of(Role.ADMIN));
         when(userContextExtractor.extractUserContext(request)).thenReturn(Optional.of(userContext));

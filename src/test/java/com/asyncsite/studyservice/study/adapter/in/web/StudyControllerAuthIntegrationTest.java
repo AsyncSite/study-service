@@ -1,18 +1,27 @@
 package com.asyncsite.studyservice.study.adapter.in.web;
 
+import com.asyncsite.studyservice.common.auth.AuthenticationInterceptor;
 import com.asyncsite.studyservice.common.auth.Role;
+import com.asyncsite.studyservice.common.auth.UserContext;
+import com.asyncsite.studyservice.common.config.WebConfig;
 import com.asyncsite.studyservice.study.domain.model.Study;
 import com.asyncsite.studyservice.study.domain.model.StudyStatus;
 import com.asyncsite.studyservice.study.domain.port.in.GetStudyUseCase;
 import com.asyncsite.studyservice.study.domain.port.in.ManageStudyUseCase;
 import com.asyncsite.studyservice.study.domain.port.in.ProposeStudyUseCase;
+import com.asyncsite.studyservice.study.adapter.in.web.mapper.StudyWebMapper;
+import com.asyncsite.studyservice.common.auth.UserContextExtractor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -21,13 +30,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StudyController.class)
+@WebMvcTest(value = StudyController.class, excludeAutoConfiguration = {
+    org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+    org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+})
 @DisplayName("StudyController 인증 통합 테스트")
+@Import({AuthenticationInterceptor.class, WebConfig.class}) // 커스텀 인터셉터 로드
+@AutoConfigureWebMvc
 class StudyControllerAuthIntegrationTest {
 
     @Autowired
@@ -36,14 +54,20 @@ class StudyControllerAuthIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
     
-    @MockBean
+    @MockitoBean
     private ProposeStudyUseCase proposeStudyUseCase;
     
-    @MockBean
+    @MockitoBean
     private ManageStudyUseCase manageStudyUseCase;
     
-    @MockBean
+    @MockitoBean
     private GetStudyUseCase getStudyUseCase;
+    
+    @MockitoBean
+    private StudyWebMapper studyWebMapper;
+    
+    @MockitoBean
+    private UserContextExtractor userContextExtractor;
 
     private static final String USER_ID_HEADER = "X-User-Id";
     private static final String USER_EMAIL_HEADER = "X-User-Email";
@@ -55,7 +79,10 @@ class StudyControllerAuthIntegrationTest {
     void shouldAllowAccessToPublicEndpointsWithoutAuth() throws Exception {
         // given
         Study mockStudy = createMockStudy();
+        Page<Study> mockPage = new PageImpl<>(List.of(mockStudy));
+        
         when(getStudyUseCase.getAllStudies()).thenReturn(List.of(mockStudy));
+        when(getStudyUseCase.getAllStudies(any(Pageable.class))).thenReturn(mockPage);
         when(getStudyUseCase.getStudyById(any(UUID.class))).thenReturn(Optional.of(mockStudy));
         
         // when & then - 전체 목록 조회
@@ -93,7 +120,9 @@ class StudyControllerAuthIntegrationTest {
         String userId = "user123";
         StudyCreateRequest request = new StudyCreateRequest("Test Study", "Description", userId);
         Study mockStudy = createMockStudy();
+        UserContext userContext = new UserContext(userId, "user@example.com", "Test User", Set.of(Role.USER));
         
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(userContext));
         when(proposeStudyUseCase.propose(any(), any(), any())).thenReturn(mockStudy);
         
         // when & then
@@ -192,7 +221,9 @@ class StudyControllerAuthIntegrationTest {
         String userId = "user123";  
         StudyCreateRequest request = new StudyCreateRequest("Test Study", "Description", userId);
         Study mockStudy = createMockStudy();
+        UserContext userContext = new UserContext(userId, "user@example.com", "Test User", Set.of(Role.USER));
         
+        when(userContextExtractor.extractUserContext(any())).thenReturn(Optional.of(userContext));
         when(proposeStudyUseCase.propose(any(), any(), any())).thenReturn(mockStudy);
         
         // when & then - 알 수 없는 역할(UNKNOWN_ROLE)이 포함되어 있지만 USER는 유효하므로 성공
