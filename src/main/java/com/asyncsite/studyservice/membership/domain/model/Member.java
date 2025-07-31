@@ -15,6 +15,7 @@ import java.util.UUID;
 public class Member {
     private UUID id;
     private UUID studyId;
+    private String studyTitle;
     private String userId;
     private MemberRole role;
     private MemberStatus status;

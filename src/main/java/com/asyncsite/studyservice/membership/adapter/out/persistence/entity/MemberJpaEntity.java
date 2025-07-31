@@ -30,6 +30,9 @@ public class MemberJpaEntity {
     private UUID studyId;
 
     @Column(nullable = false)
+    private String studyTitle;
+
+    @Column(nullable = false)
     private String userId;
 
     @Enumerated(EnumType.STRING)

@@ -12,9 +12,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -93,14 +95,25 @@ public class MemberService {
 
         // TODO: Implement actual averageAttendanceRate and warningCount logic
         double averageAttendanceRate = 0.0; // Placeholder
-        Map<String, Integer> warningCount = Map.of("0", 0, "1", 0, "2", 0); // Placeholder
+        Map<String, Integer> warningCountMap = new HashMap<>();
+        memberRepository.findByStudyId(studyId).stream()
+                .filter(member -> member.getWarningCount() != null)
+                .collect(Collectors.groupingBy(Member::getWarningCount, Collectors.counting()))
+                .forEach((count, numMembers) -> warningCountMap.put(String.valueOf(count), numMembers.intValue()));
+
+        // Ensure 0, 1, 2 warning counts are present
+        warningCountMap.putIfAbsent("0", 0);
+        warningCountMap.putIfAbsent("1", 0);
+        warningCountMap.putIfAbsent("2", 0);
+
+        Map<String, Integer> finalWarningCount = warningCountMap;
 
         return Map.of(
                 "totalMembers", totalMembers,
                 "activeMembers", activeMembers,
                 "inactiveMembers", inactiveMembers,
                 "averageAttendanceRate", averageAttendanceRate,
-                "warningCount", warningCount,
+                "warningCount", finalWarningCount,
                 "roleDistribution", roleDistribution
         );
     }

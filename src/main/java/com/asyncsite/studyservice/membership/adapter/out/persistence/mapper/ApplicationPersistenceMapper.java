@@ -22,9 +22,10 @@ public class ApplicationPersistenceMapper {
         return new ApplicationJpaEntity(
                 application.getId(),
                 application.getStudyId(),
+                application.getStudyTitle(),
                 application.getApplicantId(),
                 application.getStatus(),
-                application.getAnswers().toString(),
+                convertMapToJson(application.getAnswers()), // Map을 String으로 변환
                 application.getIntroduction(),
                 application.getRejectionReason(),
                 application.getAppliedAt(),
@@ -37,10 +38,20 @@ public class ApplicationPersistenceMapper {
         );
     }
 
+    private String convertMapToJson(Map<String, String> map) {
+        if (map == null || map.isEmpty()) return null;
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (IOException e) {
+            throw new RuntimeException("Error converting map to JSON string", e);
+        }
+    }
+
     public Application toDomain(final ApplicationJpaEntity entity) {
         return new Application(
                 entity.getId(),
                 entity.getStudyId(),
+                entity.getStudyTitle(),
                 entity.getApplicantId(),
                 entity.getStatus(),
                 convertJsonToMap(entity.getAnswers()),

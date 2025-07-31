@@ -16,6 +16,7 @@ public class ApplicationJpaEntity {
     @Id
     private UUID id;
     private UUID studyId;
+    private String studyTitle;
     private String applicantId;
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
@@ -39,6 +40,7 @@ public class ApplicationJpaEntity {
     public ApplicationJpaEntity(
         final UUID id,
         final UUID studyId,
+        final String studyTitle,
         final String applicantId,
         final ApplicationStatus status,
         final String answers,

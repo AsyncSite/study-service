@@ -16,6 +16,7 @@ import java.util.UUID;
 public class Application {
     private UUID id;
     private UUID studyId;
+    private String studyTitle;
     private String applicantId;
     private ApplicationStatus status;
     private Map<String, String> answers;
