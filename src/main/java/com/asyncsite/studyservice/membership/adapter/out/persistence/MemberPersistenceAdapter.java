@@ -1,77 +1,90 @@
 package com.asyncsite.studyservice.membership.adapter.out.persistence;
 
+import com.asyncsite.studyservice.membership.adapter.out.persistence.entity.MemberJpaEntity;
+import com.asyncsite.studyservice.membership.adapter.out.persistence.mapper.MemberPersistenceMapper;
+import com.asyncsite.studyservice.membership.adapter.out.persistence.repository.MemberJpaRepository;
 import com.asyncsite.studyservice.membership.domain.model.Member;
+import com.asyncsite.studyservice.membership.domain.model.MemberRole;
+import com.asyncsite.studyservice.membership.domain.model.MemberStatus;
 import com.asyncsite.studyservice.membership.domain.port.out.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Repository
-public class MockMemberRepository implements MemberRepository {
-    
-    private final Map<UUID, Member> storage = new ConcurrentHashMap<>();
-    
+@Component
+@RequiredArgsConstructor
+public class MemberPersistenceAdapter implements MemberRepository {
+
+    private final MemberJpaRepository memberJpaRepository;
+    private final MemberPersistenceMapper memberPersistenceMapper;
+
     @Override
     public Member save(Member member) {
-        storage.put(member.getId(), member);
-        return member;
+        MemberJpaEntity entity = memberPersistenceMapper.toEntity(member);
+        MemberJpaEntity savedEntity = memberJpaRepository.save(entity);
+        return memberPersistenceMapper.toDomain(savedEntity);
     }
-    
+
     @Override
     public Optional<Member> findById(UUID id) {
-        return Optional.ofNullable(storage.get(id));
+        return memberJpaRepository.findById(id)
+                .map(memberPersistenceMapper::toDomain);
     }
-    
+
     @Override
     public List<Member> findByStudyId(UUID studyId) {
-        return storage.values().stream()
-                .filter(member -> member.getStudyId().equals(studyId))
-                .filter(Member::isActive)
+        return memberJpaRepository.findByStudyId(studyId, Pageable.unpaged()).getContent().stream()
+                .map(memberPersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     public Page<Member> findByStudyId(UUID studyId, Pageable pageable) {
-        List<Member> members = findByStudyId(studyId);
-        
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), members.size());
-        
-        List<Member> pageContent = members.subList(start, end);
-        return new PageImpl<>(pageContent, pageable, members.size());
+        return memberJpaRepository.findByStudyId(studyId, pageable)
+                .map(memberPersistenceMapper::toDomain);
     }
-    
+
     @Override
     public List<Member> findByUserId(String userId) {
-        return storage.values().stream()
-                .filter(member -> member.getUserId().equals(userId))
+        return memberJpaRepository.findByUserId(userId).stream()
+                .map(memberPersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     public Optional<Member> findByStudyIdAndUserId(UUID studyId, String userId) {
-        return storage.values().stream()
-                .filter(member -> member.getStudyId().equals(studyId) 
-                        && member.getUserId().equals(userId)
-                        && member.isActive())
-                .findFirst();
+        return memberJpaRepository.findByStudyIdAndUserId(studyId, userId)
+                .map(memberPersistenceMapper::toDomain);
     }
-    
+
     @Override
     public int countByStudyId(UUID studyId) {
-        return (int) storage.values().stream()
-                .filter(member -> member.getStudyId().equals(studyId))
-                .filter(Member::isActive)
-                .count();
+        return memberJpaRepository.countByStudyId(studyId);
     }
-    
+
+    @Override
+    public int countByStudyIdAndStatus(UUID studyId, MemberStatus status) {
+        return memberJpaRepository.countByStudyIdAndStatus(studyId, status);
+    }
+
+    @Override
+    public Map<MemberRole, Long> countMembersByRole(UUID studyId) {
+        return memberJpaRepository.countMembersByRole(studyId).stream()
+                .collect(Collectors.toMap(
+                        row -> (MemberRole) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
     @Override
     public void deleteById(UUID id) {
-        storage.remove(id);
+        memberJpaRepository.deleteById(id);
     }
 }
