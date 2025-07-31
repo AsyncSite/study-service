@@ -30,8 +30,12 @@ public class ApplicationService {
         if (!studyRepository.isStudyRecruiting(studyId)) throw new IllegalStateException("Study is not recruiting");
         if (applicationRepository.existsByStudyIdAndApplicantIdAndStatus(studyId, applicantId)) throw new DuplicateApplicationException("Already applied to this study");
 
+        String studyTitle = studyRepository.findById(studyId)
+                .orElseThrow(() -> new IllegalArgumentException("Study not found: " + studyId))
+                .getTitle();
+
         Application savedApplication = applicationRepository.save(
-                Application.create(studyId, applicantId, answers, "지원서 제출")
+                Application.create(studyId, studyTitle, applicantId, answers, "지원서 제출")
         );
         notificationPort.sendApplicationSubmittedNotification(savedApplication);
         return savedApplication;

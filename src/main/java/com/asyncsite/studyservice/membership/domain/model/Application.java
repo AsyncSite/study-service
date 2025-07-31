@@ -72,11 +72,12 @@ public class Application {
         this.processedAt = LocalDateTime.now();
     }
     
-    public static Application create(UUID studyId, String applicantId, Map<String, String> answers, String introduction) {
+    public static Application create(UUID studyId, String studyTitle, String applicantId, Map<String, String> answers, String introduction) {
         LocalDateTime now = LocalDateTime.now();
         return Application.builder()
                 .id(UUID.randomUUID())
                 .studyId(studyId)
+                .studyTitle(studyTitle)
                 .applicantId(applicantId)
                 .status(ApplicationStatus.PENDING)
                 .answers(answers)
