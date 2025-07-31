@@ -5,6 +5,8 @@ import com.asyncsite.studyservice.study.domain.service.StudyNotFoundException;
 import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyApprovedException;
 import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyRejectedException;
 import com.asyncsite.studyservice.study.domain.exception.StudyAlreadyTerminatedException;
+import com.asyncsite.studyservice.common.exception.UnauthorizedException;
+import com.asyncsite.studyservice.common.exception.ForbiddenException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -22,6 +24,32 @@ import java.util.Map;
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorized(UnauthorizedException ex) {
+        log.warn("Authentication required: {}", ex.getMessage());
+        
+        ApiResponse<Object> response = ApiResponse.error(
+            "AUTH-4001",
+            ex.getMessage(),
+            null
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Object>> handleForbidden(ForbiddenException ex) {
+        log.warn("Access forbidden: {}", ex.getMessage());
+        
+        ApiResponse<Object> response = ApiResponse.error(
+            "AUTH-4003",
+            ex.getMessage(),
+            null
+        );
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
 
     @ExceptionHandler(StudyNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleStudyNotFound(StudyNotFoundException ex) {
