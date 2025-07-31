@@ -61,6 +61,10 @@ public class StudyService {
         return studyRepository.findById(studyId);
     }
 
+    public List<Study> getStudiesByProposerId(String proposerId) {
+        return studyRepository.findByProposerId(proposerId);
+    }
+
     private Study findStudyById(UUID studyId) {
         Optional<Study> studyOpt = studyRepository.findById(studyId);
         if (studyOpt.isEmpty()) {

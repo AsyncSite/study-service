@@ -4,6 +4,8 @@ import com.asyncsite.studyservice.study.adapter.out.persistence.entity.StudyJpaE
 import com.asyncsite.studyservice.study.adapter.out.persistence.mapper.StudyPersistenceMapper;
 import com.asyncsite.studyservice.study.adapter.out.persistence.repository.StudyJpaRepository;
 import com.asyncsite.studyservice.study.domain.model.Study;
+import com.asyncsite.studyservice.study.domain.model.StudyStatus;
+import com.asyncsite.studyservice.study.domain.model.StudyType;
 import com.asyncsite.studyservice.study.domain.port.out.StudyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,5 +67,66 @@ public class StudyPersistenceAdapter implements StudyRepository {
     @Override
     public void deleteById(final UUID id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public Optional<Study> findBySlug(final String slug) {
+        return jpaRepository.findBySlug(slug)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public List<Study> findByStatus(final StudyStatus status) {
+        return jpaRepository.findByStatus(status)
+                .stream()
+                .map(mapper::toDomainModel)
+                .toList();
+    }
+    
+    @Override
+    public List<Study> findByType(final StudyType type) {
+        return jpaRepository.findByType(type)
+                .stream()
+                .map(mapper::toDomainModel)
+                .toList();
+    }
+    
+    @Override
+    public List<Study> findByGeneration(final Integer generation) {
+        return jpaRepository.findByGeneration(generation)
+                .stream()
+                .map(mapper::toDomainModel)
+                .toList();
+    }
+    
+    @Override
+    public List<Study> findByProposerId(final String proposerId) {
+        return jpaRepository.findByProposerId(proposerId)
+                .stream()
+                .map(mapper::toDomainModel)
+                .toList();
+    }
+    
+    @Override
+    public Page<Study> findByStatus(final StudyStatus status, final Pageable pageable) {
+        return jpaRepository.findByStatus(status, pageable)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public Page<Study> findByType(final StudyType type, final Pageable pageable) {
+        return jpaRepository.findByType(type, pageable)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public Page<Study> findByGeneration(final Integer generation, final Pageable pageable) {
+        return jpaRepository.findByGeneration(generation, pageable)
+                .map(mapper::toDomainModel);
+    }
+    
+    @Override
+    public boolean existsBySlug(final String slug) {
+        return jpaRepository.existsBySlug(slug);
     }
 }
