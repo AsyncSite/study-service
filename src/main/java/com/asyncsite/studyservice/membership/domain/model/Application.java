@@ -1,9 +1,9 @@
 package com.asyncsite.studyservice.membership.domain.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class Application {
     private UUID studyId;
     private String applicantId;
     private ApplicationStatus status;
-    private Map<String, Object> answers;
+    private Map<String, String> answers;
     private String introduction;
     private String rejectionReason;
     private LocalDateTime appliedAt;
@@ -29,7 +29,6 @@ public class Application {
     private String reviewNote;
     private String reviewedBy;
     
-    // 비즈니스 메서드
     public boolean isPending() {
         return status == ApplicationStatus.PENDING;
     }
@@ -72,8 +71,7 @@ public class Application {
         this.processedAt = LocalDateTime.now();
     }
     
-    // 정적 팩토리 메서드
-    public static Application create(UUID studyId, String applicantId, Map<String, Object> answers, String introduction) {
+    public static Application create(UUID studyId, String applicantId, Map<String, String> answers, String introduction) {
         LocalDateTime now = LocalDateTime.now();
         return Application.builder()
                 .id(UUID.randomUUID())

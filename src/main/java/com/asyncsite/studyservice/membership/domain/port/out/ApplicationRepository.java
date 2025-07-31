@@ -14,6 +14,6 @@ public interface ApplicationRepository {
     List<Application> findByStudyId(UUID studyId);
     Page<Application> findByStudyId(UUID studyId, Pageable pageable);
     List<Application> findByApplicantId(String applicantId);
-    boolean existsByStudyIdAndApplicantId(UUID studyId, String applicantId);
+    boolean existsByStudyIdAndApplicantIdAndStatus(UUID studyId, String applicantId);
     void deleteById(UUID id);
 }

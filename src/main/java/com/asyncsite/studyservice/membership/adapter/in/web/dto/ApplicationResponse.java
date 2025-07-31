@@ -29,7 +29,7 @@ public class ApplicationResponse {
     private String applicantId;
     
     @Schema(description = "지원서 답변")
-    private Map<String, Object> answers;
+    private Map<String, String> answers;
     
     @Schema(description = "지원 상태")
     private ApplicationStatus status;

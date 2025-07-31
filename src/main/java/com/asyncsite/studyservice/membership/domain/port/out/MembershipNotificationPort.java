@@ -12,4 +12,5 @@ public interface MembershipNotificationPort {
     void sendMemberJoinedNotification(Member member);
     void sendMemberLeftNotification(UUID studyId, String userId);
     void sendMemberWarningNotification(Member member, String reason);
+    void sendApplicationCancelledNotification(Application application);
 }

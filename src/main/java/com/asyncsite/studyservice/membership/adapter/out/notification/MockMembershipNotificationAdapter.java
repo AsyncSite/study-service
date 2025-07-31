@@ -47,4 +47,10 @@ public class MockMembershipNotificationAdapter implements MembershipNotification
         log.info("Mock: Warning notification sent to member: {} in study: {} with reason: {}", 
                 member.getUserId(), member.getStudyId(), reason);
     }
+
+    @Override
+    public void sendApplicationCancelledNotification(Application application) {
+        log.info("Mock: Application cancelled notification sent for application: {} to study: {}",
+                application.getId(), application.getStudyId());
+    }
 }
