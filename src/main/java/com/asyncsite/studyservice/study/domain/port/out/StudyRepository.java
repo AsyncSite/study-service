@@ -25,4 +25,8 @@ public interface StudyRepository {
     Page<Study> findByGeneration(Integer generation, Pageable pageable);
     boolean existsBySlug(String slug);
     void deleteById(UUID id);
+    boolean isStudyExists(UUID studyId);
+    boolean isStudyRecruiting(UUID studyId);
+    StudyStatus getStudyStatus(UUID studyId);
+    boolean isUserStudyLeader(UUID studyId, String userId);
 }

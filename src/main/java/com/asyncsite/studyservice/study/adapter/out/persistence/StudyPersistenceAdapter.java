@@ -129,4 +129,32 @@ public class StudyPersistenceAdapter implements StudyRepository {
     public boolean existsBySlug(final String slug) {
         return jpaRepository.existsBySlug(slug);
     }
+
+    @Override
+    public boolean isStudyExists(UUID studyId) {
+        return jpaRepository.findById(studyId).isPresent();
+    }
+
+    @Override
+    public boolean isStudyRecruiting(UUID studyId) {
+        return jpaRepository.findById(studyId)
+                .map(study -> study.getStatus() == StudyStatus.APPROVED)
+                .orElse(false);
+    }
+
+    @Override
+    public StudyStatus getStudyStatus(UUID studyId) {
+        return jpaRepository.findById(studyId)
+                .map(mapper::toDomainModel)
+                .map(Study::getStatus)
+                .orElse(null);
+    }
+
+    @Override
+    public boolean isUserStudyLeader(UUID studyId, String userId) {
+        // Mock implementation - 실제로는 스터디의 리더 정보를 확인해야 함
+        return jpaRepository.findById(studyId)
+                .map(study -> study.getProposerId().equals(userId))
+                .orElse(false);
+    }
 }
