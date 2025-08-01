@@ -33,7 +33,7 @@ public class ApplicationController implements ApplicationControllerDocs {
             @RequestBody ApplicationRequest request
     ) {
         Application application = applicationUseCase.apply(studyId, request.getApplicantId(), request.getAnswers());
-        return ApiResponse.createdResponse(ApplicationResponse.from(application));
+        return ApiResponse.success(ApplicationResponse.from(application));
     }
 
     @Override

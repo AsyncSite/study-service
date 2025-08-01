@@ -46,7 +46,7 @@ public class ApplicationFormController implements ApplicationFormControllerDocs 
         log.info("지원서 양식 생성 - studyId: {}, questions: {}", studyId, request.getQuestions().size());
         
         ApplicationForm form = applicationFormUseCase.createForm(studyId, request.toQuestions());
-        return ApiResponse.createdResponse(ApplicationFormResponse.from(form));
+        return ApiResponse.success(ApplicationFormResponse.from(form));
     }
     
     @Override
