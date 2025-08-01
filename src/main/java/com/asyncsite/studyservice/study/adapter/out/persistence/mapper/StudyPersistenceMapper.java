@@ -18,7 +18,18 @@ public class StudyPersistenceMapper {
             study.getProposerId(),
             study.getStatus(),
             study.getCreatedAt(),
-            study.getUpdatedAt()
+            study.getUpdatedAt(),
+            study.getGeneration(),
+            study.getSlug(),
+            study.getType(),
+            study.getTagline(),
+            study.getSchedule(),
+            study.getDuration(),
+            study.getCapacity(),
+            study.getEnrolled(),
+            study.getRecruitDeadline(),
+            study.getStartDate(),
+            study.getEndDate()
         );
     }
     
@@ -33,7 +44,18 @@ public class StudyPersistenceMapper {
             entity.getProposerId(),
             entity.getStatus(),
             entity.getCreatedAt(),
-            entity.getUpdatedAt()
+            entity.getUpdatedAt(),
+            entity.getGeneration(),
+            entity.getSlug(),
+            entity.getType(),
+            entity.getTagline(),
+            entity.getSchedule(),
+            entity.getDuration(),
+            entity.getCapacity(),
+            entity.getEnrolled(),
+            entity.getRecruitDeadline(),
+            entity.getStartDate(),
+            entity.getEndDate()
         );
     }
     
@@ -43,6 +65,7 @@ public class StudyPersistenceMapper {
     public StudyJpaEntity updateEntity(final StudyJpaEntity entity, final Study study) {
         entity.setStatus(study.getStatus());
         entity.setUpdatedAt(study.getUpdatedAt());
+        entity.setEnrolled(study.getEnrolled());
         return entity;
     }
 }

@@ -2,6 +2,7 @@ package com.asyncsite.studyservice.study.adapter.out.persistence.repository;
 
 import com.asyncsite.studyservice.study.adapter.out.persistence.entity.StudyJpaEntity;
 import com.asyncsite.studyservice.study.domain.model.StudyStatus;
+import com.asyncsite.studyservice.study.domain.model.StudyType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -46,4 +48,34 @@ public interface StudyJpaRepository extends JpaRepository<StudyJpaEntity, UUID> 
      */
     @Query("SELECT s FROM StudyJpaEntity s WHERE s.title LIKE %:keyword% OR s.description LIKE %:keyword%")
     Page<StudyJpaEntity> findByTitleContainingOrDescriptionContaining(@Param("keyword") String keyword, Pageable pageable);
+    
+    /**
+     * slug로 스터디를 조회합니다.
+     */
+    Optional<StudyJpaEntity> findBySlug(String slug);
+
+    /**
+     * slug 존재 여부를 확인합니다.
+     */
+    boolean existsBySlug(String slug);
+    
+    /**
+     * 특정 타입의 스터디들을 조회합니다.
+     */
+    List<StudyJpaEntity> findByType(StudyType type);
+    
+    /**
+     * 특정 세대의 스터디들을 조회합니다.
+     */
+    List<StudyJpaEntity> findByGeneration(Integer generation);
+    
+    /**
+     * 특정 타입의 스터디들을 페이징하여 조회합니다.
+     */
+    Page<StudyJpaEntity> findByType(StudyType type, Pageable pageable);
+    
+    /**
+     * 특정 세대의 스터디들을 페이징하여 조회합니다.
+     */
+    Page<StudyJpaEntity> findByGeneration(Integer generation, Pageable pageable);
 }
