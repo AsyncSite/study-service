@@ -1,5 +1,6 @@
 package com.asyncsite.studyservice.membership.adapter.out.persistence.entity;
 
+import com.asyncsite.studyservice.membership.adapter.out.persistence.converter.ApplicationQuestionListConverter;
 import com.asyncsite.studyservice.membership.domain.model.ApplicationQuestion;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,8 +34,8 @@ public class ApplicationFormJpaEntity {
 
     private String description;
 
-    @ElementCollection
-    @CollectionTable(name = "application_question", joinColumns = @JoinColumn(name = "form_id"))
+    @Convert(converter = ApplicationQuestionListConverter.class)
+    @Column(columnDefinition = "TEXT")
     private List<ApplicationQuestion> questions;
 
     @Column(nullable = false)
