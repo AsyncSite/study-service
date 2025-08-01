@@ -7,12 +7,18 @@ import com.asyncsite.studyservice.study.domain.service.StudyNotFoundException;
 import com.asyncsite.studyservice.study.domain.port.in.GetStudyUseCase;
 import com.asyncsite.studyservice.study.domain.port.in.ManageStudyUseCase;
 import com.asyncsite.studyservice.study.domain.port.in.ProposeStudyUseCase;
+import com.asyncsite.studyservice.common.auth.RequireAuth;
+import com.asyncsite.studyservice.common.auth.Role;
+import com.asyncsite.studyservice.common.auth.UserContext;
+import com.asyncsite.studyservice.common.auth.UserContextHolder;
+import com.asyncsite.studyservice.common.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -31,14 +37,23 @@ public class StudyController implements StudyControllerDocs {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<StudyResponse> propose(@Valid @RequestBody StudyCreateRequest request) {
-        Study study = proposeStudyUseCase.propose(request.title(), request.description(), request.proposerId());
+    @RequireAuth(roles = {Role.USER, Role.ADMIN})
+    public ApiResponse<StudyResponse> propose(@Valid @RequestBody StudyCreateRequest request, HttpServletRequest httpRequest) {
+        final UserContext userContext = UserContextHolder.getCurrentUserContext(httpRequest);
+
+        // 요청의 proposerId와 JWT의 userId가 일치하는지 확인
+        if (!userContext.userId().equals(request.proposerId())) {
+            throw new ForbiddenException("본인만 스터디를 제안할 수 있습니다.");
+        }
+
+        Study study = proposeStudyUseCase.propose(request.title(), request.description(), userContext.userId());
         StudyResponse response = studyWebMapper.toResponse(study);
         return ApiResponse.success(response);
     }
 
     @Override
     @PatchMapping("/{studyId}/approve")
+    @RequireAuth(roles = {Role.ADMIN})
     public ApiResponse<StudyResponse> approve(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.approve(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
@@ -47,6 +62,7 @@ public class StudyController implements StudyControllerDocs {
 
     @Override
     @PatchMapping("/{studyId}/reject")
+    @RequireAuth(roles = {Role.ADMIN})
     public ApiResponse<StudyResponse> reject(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.reject(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);
@@ -55,6 +71,7 @@ public class StudyController implements StudyControllerDocs {
 
     @Override
     @DeleteMapping("/{studyId}")
+    @RequireAuth(roles = {Role.ADMIN})
     public ApiResponse<StudyResponse> terminate(@PathVariable UUID studyId) {
         Study study = manageStudyUseCase.terminate(studyId);
         StudyResponse response = studyWebMapper.toResponse(study);

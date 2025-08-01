@@ -132,7 +132,7 @@ class StudyTest {
 
         // when
         final Study study = new Study(id, title, description, proposerId, status, createdAt, updatedAt,
-                null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, 0, null, null, null);
 
         // then
         assertThat(study.getId()).isEqualTo(id);
