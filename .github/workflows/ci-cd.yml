@@ -103,6 +103,34 @@ jobs:
         name: test-reports
         path: '**/build/reports/tests/'
         retention-days: 7
+    
+    - name: Send Discord Notification on Test Failure
+      if: failure()
+      env:
+        STATUS_COLOR: '15158332'
+        STATUS_EMOJI: '❌'
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d "{
+               \"embeds\": [{
+                 \"title\": \"$STATUS_EMOJI study-service 테스트 실패\",
+                 \"color\": $STATUS_COLOR,
+                 \"fields\": [
+                   {\"name\": \"서비스\", \"value\": \"study-service\", \"inline\": true},
+                   {\"name\": \"브랜치\", \"value\": \"${{ github.ref_name }}\", \"inline\": true},
+                   {\"name\": \"실행자\", \"value\": \"${{ github.actor }}\", \"inline\": true},
+                   {\"name\": \"커밋\", \"value\": \"\`${GITHUB_SHA::8}\`\", \"inline\": false},
+                   {\"name\": \"메시지\", \"value\": \"테스트 단계에서 실패했습니다. 로그를 확인해주세요.\", \"inline\": false},
+                   {\"name\": \"시간\", \"value\": \"$(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M:%S KST')\", \"inline\": false}
+                 ],
+                 \"footer\": {
+                   \"text\": \"AsyncSite CI/CD\"
+                 },
+                 \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\"
+               }]
+             }" \
+             https://discord.com/api/webhooks/1399402822105038999/2qQDazifNKeW_c8MhHqcrw6Li5yDQtBL7f2JIBQ_b4qVT3Vxh7TfpMV3kBFnDYAFL3-h
 
   build-and-push:
     name: Build and Push Docker Image
@@ -173,6 +201,34 @@ jobs:
         tags: |
           ${{ env.IMAGE_NAME }}:latest
           ${{ env.IMAGE_NAME }}:${{ github.sha }}
+    
+    - name: Send Discord Notification on Build Failure
+      if: failure()
+      env:
+        STATUS_COLOR: '15158332'
+        STATUS_EMOJI: '❌'
+      run: |
+        curl -H "Content-Type: application/json" \
+             -X POST \
+             -d "{
+               \"embeds\": [{
+                 \"title\": \"$STATUS_EMOJI study-service 빌드 실패\",
+                 \"color\": $STATUS_COLOR,
+                 \"fields\": [
+                   {\"name\": \"서비스\", \"value\": \"study-service\", \"inline\": true},
+                   {\"name\": \"브랜치\", \"value\": \"${{ github.ref_name }}\", \"inline\": true},
+                   {\"name\": \"실행자\", \"value\": \"${{ github.actor }}\", \"inline\": true},
+                   {\"name\": \"커밋\", \"value\": \"\`${GITHUB_SHA::8}\`\", \"inline\": false},
+                   {\"name\": \"메시지\", \"value\": \"Docker 이미지 빌드 또는 푸시 단계에서 실패했습니다.\", \"inline\": false},
+                   {\"name\": \"시간\", \"value\": \"$(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M:%S KST')\", \"inline\": false}
+                 ],
+                 \"footer\": {
+                   \"text\": \"AsyncSite CI/CD\"
+                 },
+                 \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\"
+               }]
+             }" \
+             https://discord.com/api/webhooks/1399402822105038999/2qQDazifNKeW_c8MhHqcrw6Li5yDQtBL7f2JIBQ_b4qVT3Vxh7TfpMV3kBFnDYAFL3-h
 
   deploy:
     name: Deploy to Home Server
